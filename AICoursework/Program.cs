@@ -37,8 +37,8 @@
         {
             var mainString = ReadFile();
 
-            var allValues = mainString.Split(new char[] { ',' })
-                .Select(n => int.Parse(n))
+            var allValues = mainString.Split(',')
+                .Select(int.Parse)
                 .ToList();
 
             var totalAmount = allValues[0];
@@ -52,23 +52,31 @@
             _startNode = new Node(1, allValues[1], allValues[2], 0);
             _endNode = new Node(totalAmount, allValues[totalAmount * 2 - 1], allValues[totalAmount * 2], 0);
 
-            var nodesToChooseList = new List<Node> { _startNode };
+            var nodesToChooseList = new PriorityQueue<Node, int>();
+            nodesToChooseList.Enqueue(_startNode, 0);
             var closedNodesList = new List<Node> {};
 
             var previousNode = _startNode;
 
-            while (nodesToChooseList.Any())
+            while (nodesToChooseList.Count > 0)
             {
                 // Pick current node with lowest f
-                var currentNode = nodesToChooseList.OrderBy(node => node._f).First();
+                var currentNode = nodesToChooseList.Dequeue();
 
                 // Add the node to the results
                 closedNodesList.Add(currentNode);
 
+                // If we found the end return
+                if (currentNode._id == _endNode._id)
+                {
+                    PrintPath(closedNodesList);
+                    return;
+                }
+
                 // Remove nodes from the list
                 nodesToChooseList.Clear();
 
-                // Find nodes that can be reached (priorityqueue)
+                // Find nodes that can be reached
                 foreach (var accessibility in matrix)
                 {
                     if (accessibility[currentNode._id - 1] == 1)
@@ -97,9 +105,9 @@
         {
             var path = "";
             foreach (var node in nodes)
-                path += node._id.ToString() + " ";
-
-            Console.WriteLine(path + _endNode._id);
+            {
+                Console.Write(node._id + " ");
+            }
         }
 
         public double CalculateF(int x, int y)
