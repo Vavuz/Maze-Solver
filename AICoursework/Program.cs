@@ -81,20 +81,19 @@
                 {
                     if (accessibility[currentNode._id - 1] == 1)
                     {
-                        var index = matrix.IndexOf(accessibility) + 1;
-                        nodesToChooseList.Add(new Node(index, allValues[index * 2 - 1], allValues[index * 2], CalculateF(allValues[index * 2], allValues[index * 2 + 1])));
+                        var index = (matrix.IndexOf(accessibility) + 1) * 2;
+
+                        if (closedNodesList.Any(node => node._id == index / 2))
+                            continue;
+
+                        var x = allValues[index - 1];
+                        var y = allValues[index];
+                        var distance = Math.Pow(currentNode._x - x, 2) + Math.Pow(currentNode._y - y, 2);
+
+                        var f = CalculateF(distance, x, y);
+
+                        nodesToChooseList.Enqueue(new Node(index / 2, x, y, f), f);
                     }
-                }
-
-                // Remove previous node
-                nodesToChooseList.RemoveAll(node => node._id == previousNode._id);
-                previousNode = currentNode;
-
-                // if it's equal to end node end, otherwise continue
-                if (nodesToChooseList.Exists(node => node._id == totalAmount))
-                {
-                    PrintPath(closedNodesList);
-                    return;
                 }
             }
 
@@ -103,17 +102,16 @@
 
         public void PrintPath(List<Node> nodes)
         {
-            var path = "";
             foreach (var node in nodes)
             {
                 Console.Write(node._id + " ");
             }
         }
 
-        public double CalculateF(int x, int y)
+        public int CalculateF(double distance, int x, int y)
         {
-            return _distance + Math.Pow(_endNode._x - x, 2) +
-                               Math.Pow(_endNode._y - y, 2);
+            return Convert.ToInt32(distance + Math.Pow(_endNode._x - x, 2) +
+                               Math.Pow(_endNode._y - y, 2));
         }
     }
 
