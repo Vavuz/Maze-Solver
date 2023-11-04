@@ -5,23 +5,21 @@
         public int _id;
         public int _x;
         public int _y;
-        public double _f;
 
-        public Node(int id, int x, int y, double f)
+        public Node(int id, int x, int y)
         {
             _id = id;
             _x = x;
             _y = y;
-            _f = f;
         }
     }
 
     class CaveSolver
     {
-        public Node _startNode;
-        public Node _endNode;
-        public int _distance = 0;
+        public Node? _startNode;
+        public Node? _endNode;
         public string _fileName;
+        public double? _distance;
 
         public CaveSolver(string fileName)
         {
@@ -43,20 +41,17 @@
 
             var totalAmount = allValues[0];
 
-            var matrix = allValues.TakeLast(totalAmount * totalAmount)
-                .Select((x, i) => new { Index = i, Value = x })
-                .GroupBy(x => x.Index / totalAmount)
-                .Select(x => x.Select(v => v.Value).ToList())
-                .ToList();
-
-            _startNode = new Node(1, allValues[1], allValues[2], 0);
-            _endNode = new Node(totalAmount, allValues[totalAmount * 2 - 1], allValues[totalAmount * 2], 0);
+            _startNode = new Node(1, allValues[1], allValues[2]);
+            _endNode = new Node(totalAmount, allValues[totalAmount * 2 - 1], allValues[totalAmount * 2]);
 
             var nodesToChooseList = new PriorityQueue<Node, int>();
-            nodesToChooseList.Enqueue(_startNode, 0);
-            var closedNodesList = new List<Node> {};
+            var closedNodesList = new List<int> {};
+            var accessDictionary = CreateDictionary(totalAmount, allValues.TakeLast(totalAmount * totalAmount).ToList());
 
-            var previousNode = _startNode;
+            nodesToChooseList.Enqueue(_startNode, 0);
+
+            // Remove idead nodes
+            var keysToRemove = accessDictionary.Where(kv => kv.Value.Count == 0 && kv.Key != totalAmount - 1).Select(kv => kv.Key + 1).ToList();
 
             while (nodesToChooseList.Count > 0)
             {
@@ -64,7 +59,7 @@
                 var currentNode = nodesToChooseList.Dequeue();
 
                 // Add the node to the results
-                closedNodesList.Add(currentNode);
+                closedNodesList.Add(currentNode._id);
 
                 // If we found the end return
                 if (currentNode._id == _endNode._id)
@@ -77,41 +72,57 @@
                 nodesToChooseList.Clear();
 
                 // Find nodes that can be reached
-                foreach (var accessibility in matrix)
+                foreach(var nodeId in accessDictionary[currentNode._id - 1])
                 {
-                    if (accessibility[currentNode._id - 1] == 1)
-                    {
-                        var index = (matrix.IndexOf(accessibility) + 1) * 2;
+                    if (closedNodesList.Any(node => node == nodeId) || keysToRemove.Any(x => x == nodeId))
+                        continue;
 
-                        if (closedNodesList.Any(node => node._id == index / 2))
-                            continue;
+                    var x = allValues[nodeId * 2 - 1];
+                    var y = allValues[nodeId * 2];
+                    var distance = Math.Pow(currentNode._x - x, 2) + Math.Pow(currentNode._y - y, 2);
 
-                        var x = allValues[index - 1];
-                        var y = allValues[index];
-                        var distance = Math.Pow(currentNode._x - x, 2) + Math.Pow(currentNode._y - y, 2);
+                    var f = CalculateF(distance, x, y);
 
-                        var f = CalculateF(distance, x, y);
-
-                        nodesToChooseList.Enqueue(new Node(index / 2, x, y, f), f);
-                    }
+                    nodesToChooseList.Enqueue(new Node(nodeId, x, y), f);
                 }
             }
 
             Console.WriteLine("0");
         }
 
-        public void PrintPath(List<Node> nodes)
+        public static Dictionary<int, List<int>> CreateDictionary(int size, List<int> accesses)
         {
-            foreach (var node in nodes)
+            var dictionary = new Dictionary<int, List<int>>();
+
+            for (int i = 0; i < size; i++)
             {
-                Console.Write(node._id + " ");
+                dictionary[i] = new List<int>();
+                for (int j = 0; j < size; j++)
+                {
+                    if (accesses[j * size + i] == 1)
+                    {
+                        dictionary[i].Add(j + 1);
+                    }
+                }
+            }
+
+            return dictionary;
+        }
+
+        public void PrintPath(List<int> nodeIds)
+        {
+            foreach (var nodeId in nodeIds)
+            {
+                Console.Write(nodeId + " ");
             }
         }
 
         public int CalculateF(double distance, int x, int y)
         {
-            return Convert.ToInt32(distance + Math.Pow(_endNode._x - x, 2) +
-                               Math.Pow(_endNode._y - y, 2));
+            // Maybe use absolute value instead?
+            return Convert.ToInt32(distance +
+                                   Math.Pow(_endNode._x - x, 2) +
+                                   Math.Pow(_endNode._y - y, 2));
         }
     }
 
