@@ -5,17 +5,25 @@
         public int _id;
         public int _x;
         public int _y;
+        public double _g { get; set;}
+        public double _f {  get; set; }
+        public int _parent { get; set;}
 
-        public Node(int id, int x, int y)
+        // should it store f too
+        public Node(int id, int x, int y, double g = double.MaxValue, double f = double.MaxValue, int parent = 0)
         {
             _id = id;
             _x = x;
             _y = y;
+            _g = g;
+            _f = f;
+            _parent = parent;
         }
     }
 
     class CaveSolver
     {
+        // could add endnodex and endnodey and remove x and y from the node class
         public Node? _startNode;
         public Node? _endNode;
         public string _fileName;
@@ -41,25 +49,25 @@
 
             var totalAmount = allValues[0];
 
-            _startNode = new Node(1, allValues[1], allValues[2]);
             _endNode = new Node(totalAmount, allValues[totalAmount * 2 - 1], allValues[totalAmount * 2]);
+            _startNode = new Node(1, allValues[1], allValues[2], 0, CalculateF(0, allValues[1], allValues[2]));
 
-            var nodesToChooseList = new PriorityQueue<Node, int>();
-            var closedNodesList = new List<int> {};
+            var nodesToChooseList = new List<Node>();
+            var closedNodesList = new List<Node>();
             var accessDictionary = CreateDictionary(totalAmount, allValues.TakeLast(totalAmount * totalAmount).ToList());
 
-            nodesToChooseList.Enqueue(_startNode, 0);
+            nodesToChooseList.Add(_startNode);
 
-            // Remove idead nodes
-            var keysToRemove = accessDictionary.Where(kv => kv.Value.Count == 0 && kv.Key != totalAmount - 1).Select(kv => kv.Key + 1).ToList();
+            // Store dead nodes
+            var keysToRemove = accessDictionary.SkipLast(1).Where(kv => kv.Value.Count == 0).Select(kv => kv.Key + 1).ToList();
 
             while (nodesToChooseList.Count > 0)
             {
                 // Pick current node with lowest f
-                var currentNode = nodesToChooseList.Dequeue();
+                var currentNode = nodesToChooseList.OrderBy(node => node._f).First();
 
-                // Add the node to the results
-                closedNodesList.Add(currentNode._id);
+                // Add current node to the closed list
+                closedNodesList.Add(currentNode);
 
                 // If we found the end return
                 if (currentNode._id == _endNode._id)
@@ -68,23 +76,39 @@
                     return;
                 }
 
-                // Remove nodes from the list
-                nodesToChooseList.Clear();
-
-                // Find nodes that can be reached
+                // Loop through nodes that can be reached
                 foreach(var nodeId in accessDictionary[currentNode._id - 1])
                 {
-                    if (closedNodesList.Any(node => node == nodeId) || keysToRemove.Any(x => x == nodeId))
+                    // If it is already in the closed list or if it is a dead node, ignore
+                    if (closedNodesList.Any(node => node._id == nodeId) || keysToRemove.Any(x => x == nodeId))
                         continue;
 
                     var x = allValues[nodeId * 2 - 1];
                     var y = allValues[nodeId * 2];
-                    var distance = Math.Pow(currentNode._x - x, 2) + Math.Pow(currentNode._y - y, 2);
+                    var distance = Math.Sqrt(Math.Pow(currentNode._x - x, 2) + Math.Pow(currentNode._y - y, 2));
+                    var g = currentNode._g + distance;
+                    var f = CalculateF(g, x, y);
 
-                    var f = CalculateF(distance, x, y);
+                    // If it is already in the visited list and has a better g, update it, otherwise add it
+                    var openNode = nodesToChooseList.FirstOrDefault(node => node._id == nodeId);
+                    if (openNode == null)
+                    {
+                        nodesToChooseList.Add(new Node(nodeId, x, y, g, f, currentNode._id));
+                    }
+                    else if (g < openNode._g)
+                    {
+                        openNode._g = g;
 
-                    nodesToChooseList.Enqueue(new Node(nodeId, x, y), f);
+                        if (f < openNode._f)
+                            openNode._f = f;
+
+                        openNode._parent = currentNode._id;
+                        nodesToChooseList[nodesToChooseList.FindIndex(node => node._id == openNode._id)] = openNode;
+                    }
                 }
+
+                // Remove current node from open list
+                nodesToChooseList.Remove(currentNode);
             }
 
             Console.WriteLine("0");
@@ -94,6 +118,7 @@
         {
             var dictionary = new Dictionary<int, List<int>>();
 
+            // more meaningful names
             for (int i = 0; i < size; i++)
             {
                 dictionary[i] = new List<int>();
@@ -109,20 +134,37 @@
             return dictionary;
         }
 
-        public void PrintPath(List<int> nodeIds)
+        public static void PrintPath(List<Node> nodeList)
         {
-            foreach (var nodeId in nodeIds)
+            var currentIndex = nodeList.Count - 1;
+            var output = "";
+
+            while (currentIndex >= 0)
             {
-                Console.Write(nodeId + " ");
+                output = nodeList[currentIndex]._id + " " + output;
+                currentIndex = FindParentIndex(nodeList, currentIndex);
             }
+
+            Console.WriteLine(output);
         }
 
-        public int CalculateF(double distance, int x, int y)
+        public static int FindParentIndex(List<Node> nodeList, int currentIndex)
         {
-            // Maybe use absolute value instead?
-            return Convert.ToInt32(distance +
-                                   Math.Pow(_endNode._x - x, 2) +
-                                   Math.Pow(_endNode._y - y, 2));
+            // more meaningful names
+            int parentId = nodeList[currentIndex]._parent;
+
+            for (int i = 0; i < nodeList.Count; i++)
+            {
+                if (nodeList[i]._id == parentId)
+                    return i;
+            }
+
+            return 0;
+        }
+
+        public int CalculateF(double g, int x, int y)
+        {
+            return Convert.ToInt32(g + Math.Sqrt(Math.Pow(_endNode._x - x, 2) + Math.Pow(_endNode._y - y, 2)));
         }
     }
 
