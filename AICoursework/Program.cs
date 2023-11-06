@@ -137,10 +137,11 @@
         public static void PrintPath(List<Node> nodeList)
         {
             var currentIndex = nodeList.Count - 1;
-            var output = "";
+            var output = nodeList[currentIndex]._id + " ";
 
-            while (currentIndex >= 0)
+            while (currentIndex > 1)
             {
+                currentIndex = FindParentIndex(nodeList, currentIndex);
                 output = nodeList[currentIndex]._id + " " + output;
                 currentIndex = FindParentIndex(nodeList, currentIndex);
             }
