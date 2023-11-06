@@ -58,9 +58,6 @@
 
             nodesToChooseList.Add(_startNode);
 
-            // Store dead nodes
-            var keysToRemove = accessDictionary.SkipLast(1).Where(kv => kv.Value.Count == 0).Select(kv => kv.Key + 1).ToList();
-
             while (nodesToChooseList.Count > 0)
             {
                 // Pick current node with lowest f
@@ -80,7 +77,7 @@
                 foreach(var nodeId in accessDictionary[currentNode._id - 1])
                 {
                     // If it is already in the closed list or if it is a dead node, ignore
-                    if (closedNodesList.Any(node => node._id == nodeId) || keysToRemove.Any(x => x == nodeId))
+                    if (closedNodesList.Any(node => node._id == nodeId))
                         continue;
 
                     var x = allValues[nodeId * 2 - 1];
@@ -143,9 +140,8 @@
             {
                 currentIndex = FindParentIndex(nodeList, currentIndex);
                 output = nodeList[currentIndex]._id + " " + output;
-                currentIndex = FindParentIndex(nodeList, currentIndex);
             }
-
+            
             Console.WriteLine(output);
         }
 
