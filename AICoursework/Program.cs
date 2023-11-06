@@ -9,7 +9,6 @@
         public double _f {  get; set; }
         public int _parent { get; set;}
 
-        // should it store f too
         public Node(int id, int x, int y, double g = double.MaxValue, double f = double.MaxValue, int parent = 0)
         {
             _id = id;
@@ -23,7 +22,6 @@
 
     class CaveSolver
     {
-        // could add endnodex and endnodey and remove x and y from the node class
         public Node? _startNode;
         public Node? _endNode;
         public string _fileName;
@@ -31,12 +29,12 @@
 
         public CaveSolver(string fileName)
         {
-            _fileName = fileName + ".cav";
+            _fileName = fileName;
         }
 
         public string ReadFile()
         {
-            return File.ReadAllText(_fileName);
+            return File.ReadAllText(_fileName + ".cav");
         }
 
         public void Solve()
@@ -73,10 +71,10 @@
                     return;
                 }
 
-                // Loop through nodes that can be reached
+                // Loop through the nodes that can be reached
                 foreach(var nodeId in accessDictionary[currentNode._id - 1])
                 {
-                    // If it is already in the closed list or if it is a dead node, ignore
+                    // If it is already in the closed list, ignore
                     if (closedNodesList.Any(node => node._id == nodeId))
                         continue;
 
@@ -108,6 +106,7 @@
                 nodesToChooseList.Remove(currentNode);
             }
 
+            WriteFile("0");
             Console.WriteLine("0");
         }
 
@@ -115,10 +114,11 @@
         {
             var dictionary = new Dictionary<int, List<int>>();
 
-            // more meaningful names
             for (int i = 0; i < size; i++)
             {
                 dictionary[i] = new List<int>();
+
+                // This loop finds all the caverns that cavern i can access
                 for (int j = 0; j < size; j++)
                 {
                     if (accesses[j * size + i] == 1)
@@ -131,25 +131,27 @@
             return dictionary;
         }
 
-        public static void PrintPath(List<Node> nodeList)
+        public void PrintPath(List<Node> nodeList)
         {
             var currentIndex = nodeList.Count - 1;
             var output = nodeList[currentIndex]._id + " ";
 
-            while (currentIndex > 1)
+            // The caverns ids are added to the output from end to start
+            while (currentIndex > 0)
             {
                 currentIndex = FindParentIndex(nodeList, currentIndex);
                 output = nodeList[currentIndex]._id + " " + output;
             }
-            
+
+            WriteFile(output);
             Console.WriteLine(output);
         }
 
         public static int FindParentIndex(List<Node> nodeList, int currentIndex)
         {
-            // more meaningful names
             int parentId = nodeList[currentIndex]._parent;
 
+            // This loop finds the index in nodeList of the parent node
             for (int i = 0; i < nodeList.Count; i++)
             {
                 if (nodeList[i]._id == parentId)
@@ -163,14 +165,19 @@
         {
             return Convert.ToInt32(g + Math.Sqrt(Math.Pow(_endNode._x - x, 2) + Math.Pow(_endNode._y - y, 2)));
         }
+
+        public void WriteFile(string output)
+        {
+            File.WriteAllText(_fileName + ".csn", output);
+        }
     }
 
     public class MainProgram
     {
         public static void Main(string[] args)
         {
-            //var solver = new CaveSolver(args[0]);
-            var solver = new CaveSolver("banana");
+            var solver = new CaveSolver(args[0]);
+            //var solver = new CaveSolver("banana");
             solver.Solve();
         }
     }
