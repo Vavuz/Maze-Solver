@@ -32,11 +32,6 @@
             _fileName = fileName;
         }
 
-        public string ReadFile()
-        {
-            return File.ReadAllText(_fileName + ".cav");
-        }
-
         public void Solve()
         {
             var mainString = ReadFile();
@@ -107,7 +102,11 @@
             }
 
             WriteFile("0");
-            Console.WriteLine("0");
+        }
+
+        public string ReadFile()
+        {
+            return File.ReadAllText(_fileName + ".cav");
         }
 
         public static Dictionary<int, List<int>> CreateDictionary(int size, List<int> accesses)
@@ -144,7 +143,6 @@
             }
 
             WriteFile(output);
-            Console.WriteLine(output);
         }
 
         public static int FindParentIndex(List<Node> nodeList, int currentIndex)
