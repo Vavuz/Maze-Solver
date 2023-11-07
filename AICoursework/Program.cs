@@ -159,9 +159,9 @@
             return 0;
         }
 
-        public int CalculateF(double g, int x, int y)
+        public double CalculateF(double g, int x, int y)
         {
-            return Convert.ToInt32(g + Math.Sqrt(Math.Pow(_endNode._x - x, 2) + Math.Pow(_endNode._y - y, 2)));
+            return g + Math.Sqrt(Math.Pow(_endNode._x - x, 2) + Math.Pow(_endNode._y - y, 2));
         }
 
         public void WriteFile(string output)
