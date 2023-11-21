@@ -34,7 +34,7 @@
 
         public void Solve()
         {
-            var mainString = ReadFile();
+            var mainString = File.ReadAllText(_fileName + ".cav");
 
             var allValues = mainString.Split(',')
                 .Select(int.Parse)
@@ -62,7 +62,7 @@
                 // If we found the end return
                 if (currentNode._id == _endNode._id)
                 {
-                    PrintPath(closedNodesList);
+                    WritePath(closedNodesList);
                     return;
                 }
 
@@ -101,12 +101,7 @@
                 nodesToChooseList.Remove(currentNode);
             }
 
-            WriteFile("0");
-        }
-
-        public string ReadFile()
-        {
-            return File.ReadAllText(_fileName + ".cav");
+            File.WriteAllText(_fileName + ".csn", "0");
         }
 
         public static Dictionary<int, List<int>> CreateDictionary(int size, List<int> accesses)
@@ -130,19 +125,19 @@
             return dictionary;
         }
 
-        public void PrintPath(List<Node> nodeList)
+        public void WritePath(List<Node> nodeList)
         {
             var currentIndex = nodeList.Count - 1;
             var output = nodeList[currentIndex]._id + " ";
 
-            // The caverns ids are added to the output from end to start
+            // The caverns' ids are added to the output from end to start
             while (currentIndex > 0)
             {
                 currentIndex = FindParentIndex(nodeList, currentIndex);
                 output = nodeList[currentIndex]._id + " " + output;
             }
 
-            WriteFile(output);
+            File.WriteAllText(_fileName + ".csn", output);
         }
 
         public static int FindParentIndex(List<Node> nodeList, int currentIndex)
@@ -163,11 +158,6 @@
         {
             return g + Math.Sqrt(Math.Pow(_endNode._x - x, 2) + Math.Pow(_endNode._y - y, 2));
         }
-
-        public void WriteFile(string output)
-        {
-            File.WriteAllText(_fileName + ".csn", output);
-        }
     }
 
     public class MainProgram
@@ -175,7 +165,6 @@
         public static void Main(string[] args)
         {
             var solver = new CaveSolver(args[0]);
-            //var solver = new CaveSolver("banana");
             solver.Solve();
         }
     }
